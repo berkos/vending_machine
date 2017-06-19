@@ -1,10 +1,10 @@
 module VendingMachine
   class Product
-    def initialize(value:, name:)
-      @value = value
+    def initialize(price:, name:)
+      @price = price
       @name = name
     end
 
-    attr_reader :value, :name
+    attr_reader :price, :name
   end
 end

@@ -1,17 +1,19 @@
 module VendingMachine
   module Currency
-    class Pound
-      def initialize(value)
-        @value = value
-      end
-
-      attr_reader :value
-
-      def to_s
+    module Pound
+      def number_to_currency(value)
         if value < 1.0
           "#{(value * 100).to_i}p"
         else
           "£{value}"
+        end
+      end
+
+      def currency_to_number(string)
+        if string.include?('p')
+          string.gsub('p', '').to_f / 100
+        elsif string.include?('£')
+          string.gsub('£', '').to_f
         end
       end
     end

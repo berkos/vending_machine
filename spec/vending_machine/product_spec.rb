@@ -1,12 +1,12 @@
 require 'spec_helper'
 
 RSpec.describe VendingMachine::Product do
-  let(:arguments) { { value: 0.60, name: 'Snickers' } }
+  let(:arguments) { { price: 0.60, name: 'Snickers' } }
   subject { described_class.new(arguments) }
 
   describe '#value' do
     it 'returns the correct value' do
-      expect(subject.value).to eq(arguments[:value])
+      expect(subject.price).to eq(arguments[:price])
     end
   end
 
