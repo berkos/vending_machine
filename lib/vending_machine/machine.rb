@@ -1,6 +1,7 @@
 module VendingMachine
   class Machine
-    include Currency::Pound
+    ProductNotAvailable = Class.new(StandardError)
+    InvalidCoin = Class.new(StandardError)
 
     DEFAULT_CATALOG = {
       snickers: 0.60,
@@ -9,65 +10,79 @@ module VendingMachine
       water: 1.00,
     }.freeze
 
-    DEFAULT_PRODUCTS_LOAD = [
-      { name: 'snickers', quantity: 5 },
-      { name: 'diet coke', quantity: 5 },
-      { name: 'twix', quantity: 5 },
-      { name: 'water', quantity: 5 },
-    ].freeze
-
-    DEFAULT_CHANGE_LOAD = [
-      { name: '1p', quantity: 20 },
-      { name: '20p', quantity: 10 },
-      { name: '50p', quantity: 5 },
-    ].freeze
-
-    def initialize(products_batch: DEFAULT_PRODUCTS_LOAD, coins_batch: DEFAULT_CHANGE_LOAD)
+    def initialize(products: DEFAULT_PRODUCTS_LOAD, coins_batch: DEFAULT_CHANGE_LOAD)
       @products = []
       @coins = []
-      @current_funds = []
+      # customer coins before he exchanges them for a product
+      @customer_coins = []
+
       load_products(products_batch)
       load_change(coins_batch)
     end
 
-    attr_reader :coins, :products
+    delegate
 
-    def load_products(products_batch)
-      products_batch.each do |product_batch|
-        product_batch[:quantity].times do
-          products.push(
-            Product.new(name: product_batch[:name], price: DEFAULT_CATALOG[product_batch[:name].to_sym])
-          )
-        end
+    attr_reader :coins, :products, :customer_coins, :customer_funds
+
+    # def create_products_from_hash_array(product_hash_array)
+    #   product_hash_array.map do |product_hash|
+    #     product_hash[:quantity].times.map do
+    #       products.push(
+    #         Product.new(name: product_hash[:name], price: DEFAULT_CATALOG[product_hash[:name].to_sym])
+    #       )
+    #     end
+    #   end.flatten.sort_by(&:name)
+    # end
+
+    # def load_change(coins_batch)
+    #   coins_batch.each do |coin_batch|
+    #     coin_batch[:quantity].times do
+    #       coins.push(Coin.new(currency_to_number(coin_batch[:name])))
+    #     end
+    #   end
+    #
+    #   coins.sort_by(&:value)
+    # end
+
+    def add_coin(coin)
+      raise InvalidCoin unless coin.is_a?(Coin)
+      customer_coins << coin
+    end
+
+    def purchase!(product_name)
+      product = products.find { |product| product == product_name }
+      raise ProductNotAvailable if product.nil?
+
+      if product.value <= customer_coins_value
+        # purchase the product
+        product_index = products.index { |product| product == product_name }
+        products.delete_at(product_index)
+
+        change_value = customer_coins_value - product.value
+
+        # To be implemented
+        #gather_change(change_value)
+        product
+      else
+        'Insufficient funds'
       end
-
-      #products.sort_by(&:name)
     end
 
-    def load_change(coins_batch)
-      coins_batch.each do |coin_batch|
-        coin_batch[:quantity].times do
-          coins.push(Coin.new(currency_to_number(coin_batch[:name])))
-        end
-      end
-
-      coins.sort_by(&:value)
+    def reset
+      # resets the machine to the state of making a purchase
     end
 
-    def add_coin(value)
-
+    def coins_value
+      coins.sum(&:value)
     end
 
-    def purchase(product)
-
+    def customer_coins_value
+      customer_coins.sum(&:value)
     end
 
     private
 
-    attr_accessor :coins, :products, :current_funds
+    attr_accessor :coins, :products, :funds, :customer_coins, :customer_funds
 
-    def current_funds_value
-      current_funds.sum(&:value)
-    end
   end
 end
