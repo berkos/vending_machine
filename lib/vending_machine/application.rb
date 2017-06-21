@@ -1,6 +1,6 @@
 module VendingMachine
-  class Machine
-    include Currency::Sterling
+  class Application
+    #include VendingMachine::Currency::Sterling
     DEFAULT_PRODUCTS_LOAD = [
       { name: 'snickers', quantity: 5 },
       { name: 'diet coke', quantity: 5 },
@@ -14,10 +14,18 @@ module VendingMachine
       { name: '50p', quantity: 5 },
     ].freeze
 
+    DEFAULT_CATALOG_PRICES = {
+      snickers: 0.60,
+      'diet_coke': 0.55,
+      twix: 0.65,
+      water: 1.00,
+    }.freeze
+
     STATES = %i(add_coins select_product purchase_product).freeze
 
     def initialize(input:, output:)
       @output = output
+      @input = input
       @machine = Machine.new(products: default_products, coins: default_coins)
       @state_index = 0
     end
@@ -29,9 +37,9 @@ module VendingMachine
         state_index = (state_index + 1) % STATES.count if input == 'next'
 
         if STATES[state_index] == :add_coins
-          print_add_coins_message
+          #display_add_coins_message
         elsif STATES[state_index] == :select_product
-
+          #display_select_product_message
         end
       end
     end
@@ -49,7 +57,7 @@ module VendingMachine
     def create_products_from_hash_array(product_hash_array)
       product_hash_array.map do |product_hash|
         product_hash[:quantity].times.map do
-          Product.new(name: product_hash[:name], price: DEFAULT_CATALOG[product_hash[:name].to_sym])
+          Product.new(name: product_hash[:name], price: DEFAULT_CATALOG_PRICES[product_hash[:name].to_sym])
         end
       end.flatten.sort_by(&:name)
     end

@@ -12,11 +12,19 @@ RSpec.describe VendingMachine::Coin do
       end
     end
 
-    context 'when the value can not represented as a coin' do
+    context 'when the value is not an actual coin' do
       let(:value) { 0.15 }
 
       it 'raises an InvalidCoinValue error' do
         expect { subject }.to raise_error(described_class::InvalidCoinValue)
+      end
+    end
+
+    context 'when the value is not a bigdecimal' do
+      let(:value) { 'a' }
+
+      it 'raises an ArgumentError error' do
+        expect { subject }.to raise_error(ArgumentError)
       end
     end
   end

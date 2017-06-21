@@ -1,6 +1,6 @@
 module VendingMachine
   module Currency
-    module Pound
+    module Sterling
       def number_to_currency(value)
         if value < 1.0
           "#{(value * 100).to_i}p"
