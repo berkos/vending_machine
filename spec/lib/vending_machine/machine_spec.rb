@@ -33,6 +33,22 @@ RSpec.describe VendingMachine::Machine do
     end
   end
 
+  describe '#select_product' do
+    let(:products) { [VendingMachine::Product.new(price: 0.55, name: 'twix')] }
+    subject { described_class.new(products: products) }
+
+    context 'when the product is available' do
+      it 'returns the name of the product selected' do
+        expect(subject.select_product('twix')).to eq('twix')
+      end
+    end
+    context 'when the product is not available' do
+      it 'returns false' do
+        expect(subject.select_product('snickers')).to eq(false)
+      end
+    end
+  end
+
   describe '#coins' do
     context 'when there are available coins' do
       subject { described_class.new(coins: coins) }
