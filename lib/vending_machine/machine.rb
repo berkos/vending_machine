@@ -4,6 +4,7 @@ module VendingMachine
     InvalidCoin = Class.new(StandardError)
     InvalidProducts = Class.new(StandardError)
     InvalidCoins = Class.new(StandardError)
+    InvalidStateToAddCoin = Class.new(StandardError)
 
     STATES = %i(selecting_product adding_coins ready_to_purchase).freeze
 
@@ -11,7 +12,6 @@ module VendingMachine
       raise InvalidProducts unless products?(products)
       raise InvalidCoins unless coins?(coins)
 
-      #raise unless coins
       @products = products
       @coins = coins
       # customer coins before he exchanges them for a product
@@ -23,61 +23,60 @@ module VendingMachine
     attr_reader :coins, :products, :customer_coins, :customer_selected_product, :state
 
     def add_coin(coin)
+      raise InvalidStateToAddCoin unless state == :adding_coins
       raise InvalidCoin unless coin.is_a?(Coin)
+
       customer_coins << coin
       @state = :ready_to_purchase if remaining_customer_amount <= 0.0
     end
 
     def load_coins(new_coins)
+      raise InvalidCoins unless coins?(new_coins)
       @coins = coins + new_coins
     end
 
     def load_products(new_products)
+      raise InvalidProducts unless products?(new_products)
       @products = products + new_products
     end
 
-    def purchase(product_name)
-      product = products.find { |product| product.name == product_name }
-      raise ProductNotAvailable if product.nil?
+    def purchase
+      raise ProductNotAvailable if customer_selected_product.nil?
 
-      if product.price <= customer_coins_value
-        change_value = customer_coins_value - product.price
+      if customer_selected_product.price <= customer_coins_value
+        change_value = customer_coins_value - customer_selected_product.price
         if change_coins = find_change(change_value)
           # purchase the product
-          product_index = products.index { |product| product.name == product_name }
+          product_index = products.index { |product| product == customer_selected_product }
           products.delete_at(product_index)
-          # remove customers coins
 
-          # To be implemented
+          customer_bought_product = customer_selected_product
           reset
-          { success: true, product: product, change: change_coins }
+          { success: true, product: customer_bought_product, change: change_coins }
         else
           reset
           { error: 'Cannot provide correct change' }
         end
       else
-        remaining_funds = product.price - customer_coins_value
+        remaining_funds = customer_selected_product.price - customer_coins_value
         { error: 'Insufficient funds', remaining_funds: remaining_funds }
       end
     end
 
-    def reset
-      # resets the machine to the state of making a purchase
-      # returns the coins??
-      @state = :selecting_product
-      @customer_coins = []
-      @customer_selected_product = nil
-    end
-
     def remaining_customer_amount
-      return nil if customer_selected_product.nil?
+      return 0.0 if customer_selected_product.nil?
 
       customer_selected_product.price - customer_coins_value
     end
 
     def select_product(product_name)
       @customer_selected_product = products.find { |product| product.name == product_name }
-      @state = :adding_coins
+      if @customer_selected_product
+        @state = :adding_coins
+        true
+      else
+        false
+      end
     end
 
     def coins_value
@@ -89,18 +88,23 @@ module VendingMachine
     end
 
     private
-    attr_accessor :coins
-    attr_writer :products, :customer_funds, :customer_coins, :customer_selected_product
+    attr_writer :products, :customer_funds, :customer_coins, :customer_selected_product, :coins
+
+    def reset
+      @state = :selecting_product
+      @customer_coins = []
+      @customer_selected_product = nil
+    end
 
     def find_change(change_value)
       remaining_value = change_value
       change = []
 
       # combine customers coins and machine coins to see if you can give change,
-      # make sure you get rid the large coins so you are more flexible
-      sorted_coins = (coins + customer_coins).sort_by(&:value)
+      # make sure you get rid the large coins first so you are more flexible
+      sorted_coins = (coins + customer_coins).sort_by(&:value).reverse
 
-      sorted_coins.reverse.each_with_index do |coin, index|
+      sorted_coins.each_with_index do |coin, index|
         if remaining_value - coin.value >= 0
           remaining_value -= coin.value
           sorted_coins[index] = nil

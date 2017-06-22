@@ -51,8 +51,6 @@ module VendingMachine
     def run
       print_vending_machine_image
       print_welcome_message
-      # digest any key to continue apart from exit
-      #return if terminate?(input.gets.chomp)
 
       loop do
         prompt_user_for_action
@@ -65,12 +63,12 @@ module VendingMachine
         else
           run_command(command)
         end
-
         output.puts('=====================================================================')
       end
     end
 
     private
+
     attr_reader :output, :input
     attr_accessor :state_index
 
@@ -83,7 +81,6 @@ module VendingMachine
         product_hash = grouped_products.find { |hash| hash[:position] == command.to_i }.to_h
         if machine.select_product(product_hash[:product_name])
           output.puts('Product Selected!')
-#          @state_index = :add_coins
         else
           output.puts('The product that you selected does not exist.')
         end
@@ -93,71 +90,27 @@ module VendingMachine
           coin = Coin.new(currency_to_number(coin_name))
           machine.add_coin(coin)
           output.puts("Coin of value #{coin.value.to_f} was added!")
-
-          # @state_index = :purchase if machine.remaining_customer_amount <= 0
-
           if machine.state == :ready_to_purchase
             output.puts('Getting the product for you..')
             result = machine.purchase(machine.customer_selected_product.name)
-
             if result.has_key?(:success)
               output.puts("You got the product #{result[:product].name}. And your change in coins are:")
               result[:change].each do |coin|
-                output.puts("#{number_to_currency(coin.value)}, ")
+                output.puts("#{number_to_currency(coin.value)}")
               end
-              output.puts("The value of which is #{result[:change].sum(&:value).to_f}")
-              # @state_index = :select_product
-
+              output.puts("The value of which is £#{result[:change].sum(&:value).to_f}")
             else
+                output.puts(result[:error])
               if result.has_key?(:remaining_funds)
-                output.puts(result[:error])
                 output.puts('Please provide more coins')
-                # @state_index = :add_coins
               else
-                output.puts(result[:error])
-                output.puts("Coins of value #{machine.customer_coins_value.to_f} were returned to you.")
-                # @state_index = :select_product
+                output.puts("Coins of value £#{machine.customer_coins_value.to_f} were returned to you.")
               end
             end
           end
         rescue ArgumentError, VendingMachine::Coin::InvalidCoinValue
           output.puts('Please enter a valid coin based on the instructions below.')
         end
-
-      when :ready_to_purchase
-        # if %w(yes y).include?(        #   output.puts('Getting the product for you..')
-        #   result = machine.purchase(machine.customer_selected_product.name)
-        #
-        #   if result.has_key?(:success)
-        #     output.puts("You got the product #{result[:product].name}. And your change in coins are:")
-        #     result[:change].each do |coin|
-        #       output.puts("#{number_to_currency(coin.value)}, ")
-        #     end
-        #     output.puts("The value of which is #{result[:change].sum(&:value).to_f}")
-        #     # @state_index = :select_product
-        #     print_welcome_message
-        #   else
-        #     if result.has_key?(:remaining_funds)
-        #       output.puts(result[:error])
-        #       output.puts('Please provide more coins')
-        #       # @state_index = :add_coins
-        #     else
-        #       output.puts(result[:error])
-        #       output.puts("Coins of value #{machine.customer_coins_value.to_f} were returned to you.")
-        #       # @state_index = :select_product
-        #       print_welcome_message
-        #     end
-        #   endcommand)
-
-
-        # elsif %w(no n).include?(command)
-        #   output.puts("Coins of value #{machine.customer_coins_value.to_f} were returned to you.")
-        #   machine.reset
-        #   @state_index = :select_product
-        #   output.puts(welcome_message)
-        # else
-        #   output.puts('Invalid command')
-        # end
       end
     end
 
@@ -188,8 +141,6 @@ module VendingMachine
         print_coins
         output.puts("You current balance is £#{machine.customer_coins_value.to_f}. The remaining amount to buy a #{machine.customer_selected_product.name} is £#{machine.remaining_customer_amount.to_f}.")
         output.puts("You may stop stop adding coins by typing 'stop'")
-        # when :purchase
-        #   output.puts("Are you sure you want to buy a #{machine.customer_selected_product.name}?. Type 'yes' or 'no' respectively")
       end
     end
 
