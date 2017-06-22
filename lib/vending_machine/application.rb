@@ -57,7 +57,7 @@ module VendingMachine
 
       loop do
         prompt_user_for_action
-        command = input.gets.chomp
+        command = input.gets.chomp unless @state_index == :purchase
         output.puts('=====================================================================')
         if %w(load_products load_change).include?(command)
           pause_execution_to_load_resources(command)
@@ -89,21 +89,19 @@ module VendingMachine
           output.puts('The product that you selected does not exist.')
         end
       when :add_coins
-        if machine.remaining_customer_amount <= 0
-          @state_index = :purchase
-        else
-          begin
-            coin_name = COINS_POSITION.find { |hash| hash[:position] == command.to_i }.to_h[:coin]
-            coin = Coin.new(currency_to_number(coin_name))
-            machine.add_coin(coin)
-            output.puts("Coin of value #{coin.value.to_f} was added!")
-          rescue ArgumentError, VendingMachine::Coin::InvalidCoinValue
-            output.puts('Please enter a valid coin based on the instructions below.')
-          end
+        begin
+          coin_name = COINS_POSITION.find { |hash| hash[:position] == command.to_i }.to_h[:coin]
+          coin = Coin.new(currency_to_number(coin_name))
+          machine.add_coin(coin)
+          output.puts("Coin of value #{coin.value.to_f} was added!")
+
+          @state_index = :purchase if machine.remaining_customer_amount <= 0
+        rescue ArgumentError, VendingMachine::Coin::InvalidCoinValue
+          output.puts('Please enter a valid coin based on the instructions below.')
         end
 
       when :purchase
-        if %w(yes y).include?(command)
+        # if %w(yes y).include?(command)
           output.puts('Getting the product for you..')
           result = machine.purchase(machine.customer_selected_product.name)
 
@@ -129,14 +127,14 @@ module VendingMachine
           end
 
 
-        elsif %w(no n).include?(command)
-          output.puts("Coins of value #{machine.customer_coins_value.to_f} were returned to you.")
-          machine.reset
-          @state_index = :select_product
-          output.puts(welcome_message)
-        else
-          output.puts('Invalid command')
-        end
+        # elsif %w(no n).include?(command)
+        #   output.puts("Coins of value #{machine.customer_coins_value.to_f} were returned to you.")
+        #   machine.reset
+        #   @state_index = :select_product
+        #   output.puts(welcome_message)
+        # else
+        #   output.puts('Invalid command')
+        # end
       end
     end
 
@@ -164,10 +162,10 @@ module VendingMachine
       when :add_coins
         output.puts('Please add one of the following coins 1p, 2p, 5p, 10p, 20p, 50p, £1, £2. e.g. You may type 2p or £1')
         print_coins
-        output.puts("You current balance is #{machine.customer_coins_value.to_f}.")
+        output.puts("You current balance is £#{machine.customer_coins_value.to_f}. The remaining amount to buy a #{machine.customer_selected_product.name} is £#{machine.remaining_customer_amount.to_f}.")
         output.puts("You may stop stop adding coins by typing 'stop'")
-      when :purchase
-        output.puts("Are you sure you want to buy a #{machine.customer_selected_product.name}?. Type 'yes' or 'no' respectively")
+      # when :purchase
+      #   output.puts("Are you sure you want to buy a #{machine.customer_selected_product.name}?. Type 'yes' or 'no' respectively")
       end
     end
 
@@ -186,7 +184,7 @@ module VendingMachine
       output.puts('load_products - Adds extra stock to the vending machine with the default quantity of products')
       output.puts('load_coins - Adds extra change to the vending machine with the default coins')
       output.puts('? - help')
-      output.puts('There are more available commands based on the state of the vending machine.(Instructions will be given)')
+      output.puts('There are more available commands based on the state of the vending machine(Instructions will be given).')
     end
 
     def print_products_list
