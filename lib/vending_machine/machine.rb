@@ -5,6 +5,8 @@ module VendingMachine
     InvalidProducts = Class.new(StandardError)
     InvalidCoins = Class.new(StandardError)
 
+    STATES = %i(selecting_product adding_coins ready_to_purchase).freeze
+
     def initialize(products: [], coins: [])
       raise InvalidProducts unless products?(products)
       raise InvalidCoins unless coins?(coins)
@@ -15,13 +17,15 @@ module VendingMachine
       # customer coins before he exchanges them for a product
       @customer_coins = []
       @customer_selected_product = nil
+      @state = STATES[0]
     end
 
-    attr_reader :coins, :products, :customer_coins, :customer_selected_product
+    attr_reader :coins, :products, :customer_coins, :customer_selected_product, :state
 
     def add_coin(coin)
       raise InvalidCoin unless coin.is_a?(Coin)
       customer_coins << coin
+      @state = :ready_to_purchase if remaining_customer_amount <= 0.0
     end
 
     def load_coins(new_coins)
@@ -60,6 +64,7 @@ module VendingMachine
     def reset
       # resets the machine to the state of making a purchase
       # returns the coins??
+      @state = :selecting_product
       @customer_coins = []
       @customer_selected_product = nil
     end
@@ -72,6 +77,7 @@ module VendingMachine
 
     def select_product(product_name)
       @customer_selected_product = products.find { |product| product.name == product_name }
+      @state = :adding_coins
     end
 
     def coins_value
