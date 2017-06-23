@@ -50,7 +50,6 @@ module VendingMachine
 
     def run
       print_vending_machine_image
-      print_welcome_message
 
       loop do
         prompt_user_for_action
@@ -134,10 +133,10 @@ module VendingMachine
       case machine.state
       when :selecting_product
         print_welcome_message
-        output.puts('Please select one of the products from the list below by writing the name of the product')
+        output.puts('Please select one of the products from the list below by writing the number which is next to it.')
         print_products_list
       when :adding_coins
-        output.puts('Please add one of the following coins 1p, 2p, 5p, 10p, 20p, 50p, £1, £2. e.g. You may type 2p or £1')
+        output.puts('Please add one of the following coins 1p, 2p, 5p, 10p, 20p, 50p, £1, £2.1 Select the number next to the desired coin. e.g. 2.')
         print_coins
         output.puts("You current balance is £#{machine.customer_coins_value.to_f}. The remaining amount to buy a #{machine.customer_selected_product.name} is £#{machine.remaining_customer_amount.to_f}.")
       end
@@ -155,8 +154,8 @@ module VendingMachine
 
     def print_available_commands
       output.puts('exit - Terminates the program')
-      output.puts('load_products - Adds extra stock to the vending machine with the default quantity of products')
-      output.puts('load_coins - Adds extra change to the vending machine with the default coins')
+      output.puts('load_products - Adds extra stock to the vending machine with the default quantity of products.')
+      output.puts('load_coins - Adds extra change to the vending machine with the default coins.')
       output.puts('? - help')
       output.puts('There are more available commands based on the state of the vending machine(Instructions will be given).')
     end
