@@ -4,7 +4,4 @@
 require 'pry'
 require_relative '../lib/vending_machine'
 
-# read arguments
-
-
 VendingMachine::Application.new(input: STDIN, output: STDOUT).run

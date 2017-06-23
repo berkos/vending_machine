@@ -46,15 +46,19 @@ module VendingMachine
       @machine = Machine.new(products: default_products, coins: default_coins)
     end
 
-    attr_reader :machine
-
     def run
       print_vending_machine_image
       print_welcome_message
 
       loop do
         prompt_user_for_action
-        command = input.gets.chomp unless machine.state == :purchase
+
+        if machine.state != :ready_to_purchase
+          command = input.gets.chomp
+          return if terminate?(command)
+        end
+
+
         output.puts('=====================================================================')
         if %w(load_products load_change).include?(command)
           pause_execution_to_load_resources(command)
@@ -69,15 +73,11 @@ module VendingMachine
 
     private
 
-    attr_reader :output, :input
-    attr_accessor :state_index
+    attr_reader :output, :input, :machine
 
     def run_command(command)
-      exit if terminate?(command)
-
       case machine.state
       when :selecting_product
-        #binding.pry
         product_hash = grouped_products.find { |hash| hash[:position] == command.to_i }.to_h
         if machine.select_product(product_hash[:product_name])
           output.puts('Product Selected!')
@@ -90,26 +90,25 @@ module VendingMachine
           coin = Coin.new(currency_to_number(coin_name))
           machine.add_coin(coin)
           output.puts("Coin of value #{coin.value.to_f} was added!")
-          if machine.state == :ready_to_purchase
-            output.puts('Getting the product for you..')
-            result = machine.purchase(machine.customer_selected_product.name)
-            if result.has_key?(:success)
-              output.puts("You got the product #{result[:product].name}. And your change in coins are:")
-              result[:change].each do |coin|
-                output.puts("#{number_to_currency(coin.value)}")
-              end
-              output.puts("The value of which is £#{result[:change].sum(&:value).to_f}")
-            else
-                output.puts(result[:error])
-              if result.has_key?(:remaining_funds)
-                output.puts('Please provide more coins')
-              else
-                output.puts("Coins of value £#{machine.customer_coins_value.to_f} were returned to you.")
-              end
-            end
-          end
         rescue ArgumentError, VendingMachine::Coin::InvalidCoinValue
           output.puts('Please enter a valid coin based on the instructions below.')
+        end
+      when :ready_to_purchase
+        output.puts('Getting the product for you..')
+        result = machine.purchase
+        if result.has_key?(:success)
+          output.puts("You got the product #{result[:product].name}. And your change in coins are:")
+          result[:change].each do |coin|
+            output.puts("#{number_to_currency(coin.value)}")
+          end
+          output.puts("The value of which is £#{result[:change].sum(&:value).to_f}")
+        else
+          output.puts(result[:error])
+          if result.has_key?(:remaining_funds)
+            output.puts('Please provide more coins')
+          else
+            output.puts("Coins of value £#{machine.customer_coins_value.to_f} were returned to you.")
+          end
         end
       end
     end
@@ -140,7 +139,6 @@ module VendingMachine
         output.puts('Please add one of the following coins 1p, 2p, 5p, 10p, 20p, 50p, £1, £2. e.g. You may type 2p or £1')
         print_coins
         output.puts("You current balance is £#{machine.customer_coins_value.to_f}. The remaining amount to buy a #{machine.customer_selected_product.name} is £#{machine.remaining_customer_amount.to_f}.")
-        output.puts("You may stop stop adding coins by typing 'stop'")
       end
     end
 
@@ -155,7 +153,7 @@ module VendingMachine
     end
 
     def print_available_commands
-      output.puts('exit - Terminates the programm')
+      output.puts('exit - Terminates the program')
       output.puts('load_products - Adds extra stock to the vending machine with the default quantity of products')
       output.puts('load_coins - Adds extra change to the vending machine with the default coins')
       output.puts('? - help')
