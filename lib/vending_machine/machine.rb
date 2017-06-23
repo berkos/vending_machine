@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module VendingMachine
   class Machine
     ProductNotAvailable = Class.new(StandardError)
@@ -88,6 +90,7 @@ module VendingMachine
     end
 
     private
+
     attr_writer :products, :customer_funds, :customer_coins, :customer_selected_product, :coins
 
     def reset

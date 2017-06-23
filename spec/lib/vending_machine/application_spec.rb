@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe VendingMachine::Application do
   describe '#run' do
-    #let(:input_source) { double('STDIN') }
     let(:input_source) { double('STDIN') }
     let(:output_source) { double('STDOUT') }
     before do
@@ -44,7 +45,7 @@ RSpec.describe VendingMachine::Application do
     end
 
     context 'when the app is in the state of :adding_coins' do
-      let(:command) { %w{1 8 exit} }
+      let(:command) { %w(1 8 exit) }
 
       context 'when the user adds a valid coin from the selection' do
         it 'adds a coin to the machine' do
@@ -54,7 +55,7 @@ RSpec.describe VendingMachine::Application do
       end
 
       context 'when the user adds an invalid coin' do
-        let(:command) { %w{1 not correct command exit} }
+        let(:command) { %w(1 not correct command exit) }
 
         it 'does not adds a coin to the machine' do
           expect_any_instance_of(VendingMachine::Machine).not_to receive(:add_coin)
@@ -64,7 +65,7 @@ RSpec.describe VendingMachine::Application do
     end
 
     context 'when the app is in the state of :ready_to_purchase' do
-      let(:command) { %w{1 1 2 8 exit} }
+      let(:command) { %w(1 1 2 8 exit) }
 
       it 'calls vending machine to purchase and responds with the correct hash' do
         expect_any_instance_of(VendingMachine::Machine).to receive(:purchase).and_call_original
@@ -73,4 +74,3 @@ RSpec.describe VendingMachine::Application do
     end
   end
 end
-

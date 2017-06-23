@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe VendingMachine::Machine do
@@ -120,7 +122,6 @@ RSpec.describe VendingMachine::Machine do
       before { subject.select_product('twix') }
 
       context 'when you pass a coin as an argument' do
-
         it 'adds the coin to the customer_coins', :aggregate_failures do
           subject.add_coin(coin)
 
@@ -167,8 +168,23 @@ RSpec.describe VendingMachine::Machine do
   end
 
   describe '#load_products' do
-    #TODO: write more tests
+    context 'when coins are passed' do
+      let(:new_products) { [VendingMachine::Product.new(price: 0.55, name: 'twix'), VendingMachine::Product.new(price: 0.65, name: 'coke')] }
 
+      it 'stocks the machine with the extra products' do
+        subject.load_products(new_products)
+
+        expect(subject.products).to match_array(products + new_products)
+      end
+    end
+
+    context 'when coins in wrong format are passed' do
+      let(:new_coins) { [VendingMachine::Coin.new(0.05), 'not a coin!', VendingMachine::Coin.new(0.10)] }
+
+      it 'raises an error' do
+        expect { subject.load_coins(new_coins) }.to raise_error(described_class::InvalidCoins)
+      end
+    end
   end
 
   describe '#remaining_customer_amount' do
@@ -211,7 +227,6 @@ RSpec.describe VendingMachine::Machine do
       expect(subject.customer_coins_value).to eq(customer_coins.sum(&:value))
     end
   end
-
 
   describe '#purchase' do
     let(:product1) { VendingMachine::Product.new(price: 0.55, name: 'twix') }

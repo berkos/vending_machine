@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module VendingMachine
   class Product
     def initialize(price:, name:)

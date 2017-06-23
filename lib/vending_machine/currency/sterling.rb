@@ -1,11 +1,15 @@
+# frozen_string_literal: true
+
 module VendingMachine
   module Currency
     module Sterling
       def number_to_currency(value)
+        return if value.nil?
+
         if value < 1.0
           "#{(value * 100).to_i}p"
         else
-          "£{value}"
+          "£#{value}"
         end
       end
 
@@ -13,9 +17,9 @@ module VendingMachine
         return if string.nil?
 
         if string.include?('p')
-          string.gsub('p', '').to_f / 100
+          string.delete('p').to_f / 100
         elsif string.include?('£')
-          string.gsub('£', '').to_f
+          string.delete('£').to_f
         end
       end
     end

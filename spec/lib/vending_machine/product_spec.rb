@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe VendingMachine::Product do
@@ -15,7 +17,6 @@ RSpec.describe VendingMachine::Product do
       expect(subject.name).to eq(arguments[:name])
     end
   end
-
 
   describe '#to_s' do
     context 'when the value is less than a '
